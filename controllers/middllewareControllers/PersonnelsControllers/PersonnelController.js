@@ -1,56 +1,56 @@
 const facultyService = require("../../../services/FacultyServices/FacultyServices");
 const axios = require("axios");
 
-const getStudentsByFacultyId = async (req, res) => {
-  try {
-    const facultyId = req.params.id;
+// const getStudentsByFacultyId = async (req, res) => {
+//   try {
+//     const facultyId = req.params.id;
 
-    const faculty = await facultyService.getFacultyByIdService(facultyId);
+//     const faculty = await facultyService.getFacultyByIdService(facultyId);
 
-    const FACULTY_API = faculty.server_domain_name;
+//     const FACULTY_API = faculty.server_domain_name;
 
-    const students = await axios.get(
-      `${FACULTY_API}/etudiant/get-all-etudiant`
-    );
+//     const students = await axios.get(
+//       `${FACULTY_API}/etudiant/get-all-etudiant`
+//     );
 
-    if (!students.data) {
-      return res.status(404).send("students not found");
-    }
-    res.json(students.data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send(error.message);
-  }
-};
+//     if (!students.data) {
+//       return res.status(404).send("students not found");
+//     }
+//     res.json(students.data);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send(error.message);
+//   }
+// };
 
-const getStudentsOfAllFaculties = async (req, res) => {
+const getPersonnelsOfAllFaculties = async (req, res) => {
   try {
     const faculties = await facultyService.getFacultiesService();
 
-    let totalStudents = [];
-    let totalStudentsNumber = 0;
+    let totalPersonnels = [];
+    let totalPersonnelsNumber = 0;
 
     for (const faculty of faculties) {
       const FACULTY_API = faculty.server_domain_name;
 
-      const facultyStudents = await axios.get(
-        `${FACULTY_API}/etudiant/get-all-etudiant`
+      const facultyPersonnels = await axios.get(
+        `${FACULTY_API}/personnel/get-all-personnel`
       );
-      const studentByFaculty = {
+      const personnelByFaculty = {
         facultyName: faculty.name_fr,
-        students: facultyStudents.data,
-        studentsNumber: facultyStudents.data.length,
+        personnels: facultyPersonnels.data,
+        personnelsNumber: facultyPersonnels.data.length,
       };
-      totalStudentsNumber += studentByFaculty.studentsNumber;
-      totalStudents.push(studentByFaculty);
+      totalPersonnelsNumber += personnelByFaculty.personnelsNumber;
+      totalPersonnels.push(personnelByFaculty);
     }
 
-    if (!totalStudents) {
-      return res.status(404).send("students not found");
+    if (!totalPersonnels) {
+      return res.status(404).send("personnels not found");
     }
     result = {
-      totalStudents: totalStudents,
-      totalStudentsNumber: totalStudentsNumber,
+      totalPersonnels: totalPersonnels,
+      totalPersonnelsNumber: totalPersonnelsNumber,
     };
     res.json(result);
   } catch (error) {
@@ -108,8 +108,7 @@ const getStudentsOfAllFaculties = async (req, res) => {
 // };
 
 module.exports = {
-  getStudentsByFacultyId,
-  getStudentsOfAllFaculties,
+  getPersonnelsOfAllFaculties
   // getAllFaculties,
   // updateEtatPersonnelById,
   // deleteEtatPersonnelById,

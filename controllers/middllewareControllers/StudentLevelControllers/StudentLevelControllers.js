@@ -1,62 +1,69 @@
 const facultyService = require("../../../services/FacultyServices/FacultyServices");
 const axios = require("axios");
 
-const getStudentsByFacultyId = async (req, res) => {
+// const getTeacherSpecialtiesByFacultyId = async (req, res) => {
+//   try {
+//     const {facultyId }= req.body;
+
+//     const faculty = await facultyService.getFacultyByIdService(facultyId);
+
+//     const FACULTY_API = faculty.server_domain_name;
+
+//     const specialties = await axios.get(
+//       `${FACULTY_API}/specialite-enseignant/get-all-specialite-enseignant`
+//     );
+
+//     if (!specialties.data) {
+//       return res.status(404).send("specialties not found");
+//     }
+//     res.json(specialties.data);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send(error.message);
+//   }
+// };
+
+const getStudentsLevelsOfAllFaculties = async (req, res) => {
   try {
-    const facultyId = req.params.id;
+    const faculties = await facultyService.getFacultiesService();
 
-    const faculty = await facultyService.getFacultyByIdService(facultyId);
+    let totalStudentLevels = [];
 
-    const FACULTY_API = faculty.server_domain_name;
+    let totalCleanStudentLevels = [];
 
-    const students = await axios.get(
-      `${FACULTY_API}/etudiant/get-all-etudiant`
-    );
+    for (const faculty of faculties) {
+      const FACULTY_API = faculty.server_domain_name;
 
-    if (!students.data) {
-      return res.status(404).send("students not found");
+      const studentLevels = await axios.get(
+        `${FACULTY_API}/niveau-classe/get-all-niveau-classe`
+      );
+
+      totalStudentLevels = totalStudentLevels.concat(studentLevels.data);
     }
-    res.json(students.data);
+
+    totalCleanStudentLevels = removeDuplicates(totalStudentLevels, "name_niveau_fr");
+
+    if (!totalCleanStudentLevels) {
+      return res.status(404).send("Student level not found");
+    }
+    res.json(totalCleanStudentLevels);
   } catch (error) {
     console.error(error);
     res.status(500).send(error.message);
   }
 };
 
-const getStudentsOfAllFaculties = async (req, res) => {
-  try {
-    const faculties = await facultyService.getFacultiesService();
-
-    let totalStudents = [];
-    let totalStudentsNumber = 0;
-
-    for (const faculty of faculties) {
-      const FACULTY_API = faculty.server_domain_name;
-
-      const facultyStudents = await axios.get(
-        `${FACULTY_API}/etudiant/get-all-etudiant`
-      );
-      const studentByFaculty = {
-        facultyName: faculty.name_fr,
-        students: facultyStudents.data,
-        studentsNumber: facultyStudents.data.length,
-      };
-      totalStudentsNumber += studentByFaculty.studentsNumber;
-      totalStudents.push(studentByFaculty);
+const removeDuplicates = (array, key) => {
+  const seen = new Set();
+  return array.filter((item) => {
+    const keyValue = item[key];
+    if (seen.has(keyValue)) {
+      return false;
+    } else {
+      seen.add(keyValue);
+      return true;
     }
-
-    if (!totalStudents) {
-      return res.status(404).send("students not found");
-    }
-    result = {
-      totalStudents: totalStudents,
-      totalStudentsNumber: totalStudentsNumber,
-    };
-    res.json(result);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send(error.message);
-  }
+  });
 };
 
 // const getAllFaculties = async (req, res) => {
@@ -108,8 +115,7 @@ const getStudentsOfAllFaculties = async (req, res) => {
 // };
 
 module.exports = {
-  getStudentsByFacultyId,
-  getStudentsOfAllFaculties,
+  getStudentsLevelsOfAllFaculties
   // getAllFaculties,
   // updateEtatPersonnelById,
   // deleteEtatPersonnelById,

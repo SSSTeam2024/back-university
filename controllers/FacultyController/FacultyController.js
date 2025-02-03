@@ -2,12 +2,13 @@ const facultyService = require("../../services/FacultyServices/FacultyServices")
 
 const createFacultyController = async (req, res) => {
   try {
-    const { name_ar, name_fr, server_domain_name } = req.body;
+    const { name_ar, name_fr, server_domain_name, abreviation } = req.body;
 
     const faculty = await facultyService.createFacultyService({
       name_ar,
       name_fr,
       server_domain_name,
+      abreviation
     });
     res.json(faculty);
   } catch (error) {

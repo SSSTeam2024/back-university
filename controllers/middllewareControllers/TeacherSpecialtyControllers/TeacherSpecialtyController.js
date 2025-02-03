@@ -1,62 +1,69 @@
 const facultyService = require("../../../services/FacultyServices/FacultyServices");
 const axios = require("axios");
 
-const getStudentsByFacultyId = async (req, res) => {
+const getTeacherSpecialtiesByFacultyId = async (req, res) => {
   try {
-    const facultyId = req.params.id;
+    const {facultyId }= req.body;
 
     const faculty = await facultyService.getFacultyByIdService(facultyId);
 
     const FACULTY_API = faculty.server_domain_name;
 
-    const students = await axios.get(
-      `${FACULTY_API}/etudiant/get-all-etudiant`
+    const specialties = await axios.get(
+      `${FACULTY_API}/specialite-enseignant/get-all-specialite-enseignant`
     );
 
-    if (!students.data) {
-      return res.status(404).send("students not found");
+    if (!specialties.data) {
+      return res.status(404).send("specialties not found");
     }
-    res.json(students.data);
+    res.json(specialties.data);
   } catch (error) {
     console.error(error);
     res.status(500).send(error.message);
   }
 };
 
-const getStudentsOfAllFaculties = async (req, res) => {
+const getTeacherSpecialtiesOfAllFaculties = async (req, res) => {
   try {
     const faculties = await facultyService.getFacultiesService();
 
-    let totalStudents = [];
-    let totalStudentsNumber = 0;
+    let totalSpecialties = [];
+
+    let totalCleanSpecialties = [];
 
     for (const faculty of faculties) {
       const FACULTY_API = faculty.server_domain_name;
 
-      const facultyStudents = await axios.get(
-        `${FACULTY_API}/etudiant/get-all-etudiant`
+      const specialties = await axios.get(
+        `${FACULTY_API}/specialite-enseignant/get-all-specialite-enseignant`
       );
-      const studentByFaculty = {
-        facultyName: faculty.name_fr,
-        students: facultyStudents.data,
-        studentsNumber: facultyStudents.data.length,
-      };
-      totalStudentsNumber += studentByFaculty.studentsNumber;
-      totalStudents.push(studentByFaculty);
+
+      totalSpecialties = totalSpecialties.concat(specialties.data);
     }
 
-    if (!totalStudents) {
-      return res.status(404).send("students not found");
+    totalCleanSpecialties = removeDuplicates(totalSpecialties, "specialite_fr");
+
+    if (!totalCleanSpecialties) {
+      return res.status(404).send("specialties not found");
     }
-    result = {
-      totalStudents: totalStudents,
-      totalStudentsNumber: totalStudentsNumber,
-    };
-    res.json(result);
+    res.json(totalCleanSpecialties);
   } catch (error) {
     console.error(error);
     res.status(500).send(error.message);
   }
+};
+
+const removeDuplicates = (array, key) => {
+  const seen = new Set();
+  return array.filter((item) => {
+    const keyValue = item[key];
+    if (seen.has(keyValue)) {
+      return false;
+    } else {
+      seen.add(keyValue);
+      return true;
+    }
+  });
 };
 
 // const getAllFaculties = async (req, res) => {
@@ -108,8 +115,8 @@ const getStudentsOfAllFaculties = async (req, res) => {
 // };
 
 module.exports = {
-  getStudentsByFacultyId,
-  getStudentsOfAllFaculties,
+  getTeacherSpecialtiesByFacultyId,
+  getTeacherSpecialtiesOfAllFaculties
   // getAllFaculties,
   // updateEtatPersonnelById,
   // deleteEtatPersonnelById,

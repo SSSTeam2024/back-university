@@ -1,62 +1,69 @@
 const facultyService = require("../../../services/FacultyServices/FacultyServices");
 const axios = require("axios");
 
-const getStudentsByFacultyId = async (req, res) => {
+const getTeacherRanksByFacultyId = async (req, res) => {
   try {
-    const facultyId = req.params.id;
+    const {facultyId }= req.body;
 
     const faculty = await facultyService.getFacultyByIdService(facultyId);
 
     const FACULTY_API = faculty.server_domain_name;
 
-    const students = await axios.get(
-      `${FACULTY_API}/etudiant/get-all-etudiant`
+    const ranks = await axios.get(
+      `${FACULTY_API}/grade-enseignant/get-all-grade-enseignant`
     );
 
-    if (!students.data) {
-      return res.status(404).send("students not found");
+    if (!ranks.data) {
+      return res.status(404).send("ranks not found");
     }
-    res.json(students.data);
+    res.json(ranks.data);
   } catch (error) {
     console.error(error);
     res.status(500).send(error.message);
   }
 };
 
-const getStudentsOfAllFaculties = async (req, res) => {
+const getTeacherRanksOfAllFaculties = async (req, res) => {
   try {
     const faculties = await facultyService.getFacultiesService();
 
-    let totalStudents = [];
-    let totalStudentsNumber = 0;
+    let totalRanks = [];
+
+    let totalCleanRanks = [];
 
     for (const faculty of faculties) {
       const FACULTY_API = faculty.server_domain_name;
 
-      const facultyStudents = await axios.get(
-        `${FACULTY_API}/etudiant/get-all-etudiant`
+      const ranks = await axios.get(
+        `${FACULTY_API}/grade-enseignant/get-all-grade-enseignant`
       );
-      const studentByFaculty = {
-        facultyName: faculty.name_fr,
-        students: facultyStudents.data,
-        studentsNumber: facultyStudents.data.length,
-      };
-      totalStudentsNumber += studentByFaculty.studentsNumber;
-      totalStudents.push(studentByFaculty);
+
+      totalRanks = totalRanks.concat(ranks.data);
     }
 
-    if (!totalStudents) {
-      return res.status(404).send("students not found");
+    totalCleanRanks = removeDuplicates(totalRanks, "grade_fr");
+
+    if (!totalCleanRanks) {
+      return res.status(404).send("Ranks not found");
     }
-    result = {
-      totalStudents: totalStudents,
-      totalStudentsNumber: totalStudentsNumber,
-    };
-    res.json(result);
+    res.json(totalCleanRanks);
   } catch (error) {
     console.error(error);
     res.status(500).send(error.message);
   }
+};
+
+const removeDuplicates = (array, key) => {
+  const seen = new Set();
+  return array.filter((item) => {
+    const keyValue = item[key];
+    if (seen.has(keyValue)) {
+      return false;
+    } else {
+      seen.add(keyValue);
+      return true;
+    }
+  });
 };
 
 // const getAllFaculties = async (req, res) => {
@@ -108,8 +115,8 @@ const getStudentsOfAllFaculties = async (req, res) => {
 // };
 
 module.exports = {
-  getStudentsByFacultyId,
-  getStudentsOfAllFaculties,
+  getTeacherRanksByFacultyId,
+  getTeacherRanksOfAllFaculties
   // getAllFaculties,
   // updateEtatPersonnelById,
   // deleteEtatPersonnelById,
